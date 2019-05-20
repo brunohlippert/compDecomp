@@ -8,6 +8,10 @@ import java.util.Scanner;
 import java.util.Set;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.BufferedOutputStream;
 
 public class Compacter {
 
@@ -62,6 +66,7 @@ public class Compacter {
   private PriorityQueue<TreeNodeChar> minPQ;
   private final String path = "king_james.txt";
   private HashMap<Character,String> tabelaCodigos;
+  private int skipChars;
 
   public Compacter() {
     charMap = new HashMap<>();
@@ -104,7 +109,7 @@ public class Compacter {
      */
   }
 
-  public void montaPrioryQ() {
+  public void montaArvore() {
     charMap.forEach((letra, freq) -> {
       TreeNodeChar node = new TreeNodeChar(letra, freq);
       minPQ.add(node);
@@ -120,18 +125,23 @@ public class Compacter {
     }
 
     montaTabelaCodigos(minPQ.remove(), "");
+  }
 
-    
+  public void escreveHeader() throws IOException{
+    FileWriter arq = new FileWriter("header.txt");
+    PrintWriter gravarArq = new PrintWriter(arq);
+    gravarArq.printf(String.valueOf(skipChars)+"\n");
     tabelaCodigos.forEach( (letra,codigo) -> { 
       if(letra.equals('\n')){
-        System.out.println("Char: '\\n', codigo: "+codigo);
+        gravarArq.printf("\\n:"+codigo+"\n");
       } else if(((int)letra == 13)){
-        System.out.println("Char: 'CR', codigo: "+codigo);
+        gravarArq.printf("CR:"+codigo+"\n");
       } else {
-        System.out.println("Char: '"+letra+"', codigo: "+codigo);
+        gravarArq.printf("%c:"+codigo+"\n", letra);
       }
     });
-     
+
+    arq.close();
   }
 
   public void montaTabelaCodigos(TreeNodeChar tree, String codigo){
@@ -143,9 +153,52 @@ public class Compacter {
     } 
   }
 
+  static byte[] decodeBinary(String s) {
+    if (s.length() % 8 != 0) throw new IllegalArgumentException(
+        "Binary data length must be multiple of 8");
+    byte[] data = new byte[s.length() / 8];
+    for (int i = 0; i < s.length(); i++) {
+        char c = s.charAt(i);
+        if (c == '1') {
+            data[i >> 3] |= 0x80 >> (i & 0x7);
+        } else if (c != '0') {
+            throw new IllegalArgumentException("Invalid char in binary string");
+        }
+    }
+    return data;
+  }
+
+  public void compactaTXT(){
+    try {
+      Scanner scan = new Scanner(new File(path));
+      scan.useDelimiter("");
+      StringBuilder strBuild = new StringBuilder();
+      while (scan.hasNext()) { 
+        char letra = scan.next().charAt(0);
+        String codBin = tabelaCodigos.get(letra);
+        strBuild.append(codBin);
+      }
+      skipChars = strBuild.toString().length() % 8;
+      for(int i = 0; i < strBuild.toString().length() % 8; i++){
+        strBuild.insert(0, "0");
+      }
+      byte[] data = decodeBinary(strBuild.toString());
+      java.nio.file.Files.write(new File("compactado.zip").toPath(), data);
+      scan.close();
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
+
   public static void main(String args[]) {
     Compacter comp = new Compacter();
     comp.leTXT();
-    comp.montaPrioryQ();
+    comp.montaArvore();
+    comp.compactaTXT();
+    try{
+      comp.escreveHeader();
+    } catch(IOException e){
+     System.out.println(e);
+    }
   }
 }
