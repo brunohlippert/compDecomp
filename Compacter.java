@@ -179,8 +179,8 @@ public class Compacter {
         strBuild.append(codBin);
       }
       skipChars = strBuild.toString().length() % 8;
-      for(int i = 0; i < strBuild.toString().length() % 8; i++){
-        strBuild.insert(0, "0");
+      for(int i = 0; i < skipChars; i++){
+        strBuild.append("0");
       }
       byte[] data = decodeBinary(strBuild.toString());
       java.nio.file.Files.write(new File("compactado.zip").toPath(), data);
@@ -190,7 +190,7 @@ public class Compacter {
     }
   }
 
-  public static void main(String args[]) {
+  /*public static void main(String args[]) {
     Compacter comp = new Compacter();
     comp.leTXT();
     comp.montaArvore();
@@ -198,7 +198,7 @@ public class Compacter {
     try{
       comp.escreveHeader();
     } catch(IOException e){
-     System.out.println(e);
+      System.out.println(e);
     }
-  }
+  }*/
 }
