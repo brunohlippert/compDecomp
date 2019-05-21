@@ -178,7 +178,7 @@ public class Compacter {
         String codBin = tabelaCodigos.get(letra);
         strBuild.append(codBin);
       }
-      skipChars = strBuild.toString().length() % 8;
+      skipChars = 8 - strBuild.toString().length() % 8;
       for(int i = 0; i < skipChars; i++){
         strBuild.append("0");
       }
