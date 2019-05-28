@@ -1,0 +1,6 @@
+GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
+ExercicioRefatoracaoBanco,osGuri,Tela,269,0,6,0,67,0,9,0,6,0
+ExercicioRefatoracaoBanco,osGuri,Decompacter,321,0,22,0,65,0,17,0,6,0
+ExercicioRefatoracaoBanco,osGuri,App,37,0,0,0,10,0,3,0,3,0
+ExercicioRefatoracaoBanco,osGuri,Compacter,460,0,26,0,85,0,23,0,10,0
+ExercicioRefatoracaoBanco,osGuri,Compacter.TreeNodeChar,111,0,4,0,26,0,8,0,6,0

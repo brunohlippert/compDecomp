@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Tela.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">ExercicioRefatoracaoBanco</a> &gt; <a href="index.source.html" class="el_package">osGuri</a> &gt; <span class="el_source">Tela.java</span></div><h1>Tela.java</h1><pre class="source lang-java linenums">package osGuri;
+
+import java.io.File;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.Scene;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.layout.GridPane;
+import javafx.stage.FileChooser;
+import javafx.stage.Stage;
+
+public class Tela {
+    private Stage mainStage;
+    private Scene cenaOperacoes;
+
+    private FileChooser fileComp;
+    private FileChooser fileDecomp;
+
+    private File comFile;
+    private File decompFile;
+    private Compacter comp;
+    private Decompacter decomp;
+
+<span class="nc" id="L27">    public Tela(Stage mainStage, Compacter comp, Decompacter decomp) { // conta</span>
+<span class="nc" id="L28">        this.mainStage = mainStage;</span>
+<span class="nc" id="L29">        fileComp = new FileChooser();</span>
+<span class="nc" id="L30">        fileDecomp = new FileChooser();</span>
+
+<span class="nc" id="L32">        this.comp = comp;</span>
+<span class="nc" id="L33">        this.decomp = decomp;</span>
+<span class="nc" id="L34">    }</span>
+
+    public Scene getTela() {
+<span class="nc" id="L37">        GridPane grid = new GridPane();</span>
+<span class="nc" id="L38">        grid.setAlignment(Pos.CENTER);</span>
+<span class="nc" id="L39">        grid.setHgap(10);</span>
+<span class="nc" id="L40">        grid.setVgap(10);</span>
+<span class="nc" id="L41">        grid.setPadding(new Insets(25, 25, 25, 25));</span>
+
+        // COMPACTER
+<span class="nc" id="L44">        grid.add(new Label(&quot;Compactador&quot;), 0, 0);</span>
+
+<span class="nc" id="L46">        Button escolherTxtComp = new Button(&quot;Escolher txt&quot;);</span>
+<span class="nc" id="L47">        grid.add(escolherTxtComp, 0, 1);</span>
+
+<span class="nc" id="L49">        Button btnComp = new Button(&quot;Compactar&quot;);</span>
+
+<span class="nc" id="L51">        grid.add(btnComp, 0, 2);</span>
+
+        // DECOMPACTER
+<span class="nc" id="L54">        grid.add(new Label(&quot;Descompactador&quot;), 2, 0);</span>
+
+<span class="nc" id="L56">        Button escolherTxtDecomp = new Button(&quot;Escolher zip&quot;);</span>
+<span class="nc" id="L57">        grid.add(escolherTxtDecomp, 2, 1);</span>
+
+<span class="nc" id="L59">        Button btnDecomp = new Button(&quot;Descompactar&quot;);</span>
+
+<span class="nc" id="L61">        btnComp.setOnAction(e -&gt; {</span>
+<span class="nc bnc" id="L62" title="All 2 branches missed.">            if (comFile != null) {</span>
+<span class="nc" id="L63">                String nomrArq = comFile.getName();</span>
+<span class="nc" id="L64">                String pasta = comFile.getParent();</span>
+<span class="nc" id="L65">                comp.compactaArquivo(pasta+&quot;/&quot;, nomrArq);</span>
+<span class="nc" id="L66">                Alert alert = new Alert(AlertType.INFORMATION);</span>
+<span class="nc" id="L67">                alert.setTitle(&quot;Compactação concluida&quot;);</span>
+<span class="nc" id="L68">                alert.setHeaderText(&quot;Arquivo compactado&quot;);</span>
+<span class="nc" id="L69">                alert.showAndWait();</span>
+<span class="nc" id="L70">            }else{</span>
+<span class="nc" id="L71">                Alert alert = new Alert(AlertType.ERROR);</span>
+<span class="nc" id="L72">                alert.setTitle(&quot;404&quot;);</span>
+<span class="nc" id="L73">                alert.setHeaderText(&quot;Arquivo não selecionado&quot;);</span>
+<span class="nc" id="L74">                alert.setContentText(&quot;Selecione um arquivo!&quot;);</span>
+<span class="nc" id="L75">                alert.showAndWait();</span>
+            }
+<span class="nc" id="L77">		});</span>
+
+<span class="nc" id="L79">		btnDecomp.setOnAction(e -&gt; {</span>
+<span class="nc bnc" id="L80" title="All 2 branches missed.">            if(decompFile != null){</span>
+<span class="nc" id="L81">                String nomrArq = decompFile.getName();</span>
+<span class="nc" id="L82">                String pasta = decompFile.getParent();</span>
+<span class="nc bnc" id="L83" title="All 2 branches missed.">                if(!decomp.descompacta(pasta+&quot;/&quot;, nomrArq)){</span>
+<span class="nc" id="L84">                    Alert alert = new Alert(AlertType.ERROR);</span>
+<span class="nc" id="L85">                    alert.setTitle(&quot;Arquivo inválido&quot;);</span>
+<span class="nc" id="L86">                    alert.setContentText(&quot;Selecione um arquivo válido para descompactar!&quot;);</span>
+<span class="nc" id="L87">                    alert.showAndWait();</span>
+<span class="nc" id="L88">                }else {</span>
+<span class="nc" id="L89">                    Alert alert = new Alert(AlertType.INFORMATION);</span>
+<span class="nc" id="L90">                    alert.setTitle(&quot;Descompactação concluida&quot;);</span>
+<span class="nc" id="L91">                    alert.setHeaderText(&quot;Arquivo descompactado&quot;);</span>
+<span class="nc" id="L92">                    alert.showAndWait();</span>
+                }
+<span class="nc" id="L94">            }else{</span>
+<span class="nc" id="L95">                Alert alert = new Alert(AlertType.ERROR);</span>
+<span class="nc" id="L96">                alert.setTitle(&quot;404&quot;);</span>
+<span class="nc" id="L97">                alert.setHeaderText(&quot;Arquivo não selecionado&quot;);</span>
+<span class="nc" id="L98">                alert.setContentText(&quot;Selecione um arquivo!&quot;);</span>
+<span class="nc" id="L99">                alert.showAndWait();</span>
+            }
+<span class="nc" id="L101">        });</span>
+
+<span class="nc" id="L103">        escolherTxtComp.setOnAction(e -&gt; {</span>
+<span class="nc" id="L104">            comFile = fileComp.showOpenDialog(mainStage);</span>
+<span class="nc" id="L105">		});</span>
+
+<span class="nc" id="L107">		escolherTxtDecomp.setOnAction(e -&gt; {</span>
+<span class="nc" id="L108">            decompFile = fileDecomp.showOpenDialog(mainStage);</span>
+<span class="nc" id="L109">        });</span>
+        
+<span class="nc" id="L111">        grid.add(btnDecomp, 2, 2);</span>
+
+<span class="nc" id="L113">		cenaOperacoes = new Scene(grid);</span>
+<span class="nc" id="L114">		return cenaOperacoes;</span>
+	}
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>

@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Compacter.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">ExercicioRefatoracaoBanco</a> &gt; <a href="index.source.html" class="el_package">osGuri</a> &gt; <span class="el_source">Compacter.java</span></div><h1>Compacter.java</h1><pre class="source lang-java linenums">package osGuri;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.PriorityQueue;
+import java.util.Scanner;
+import java.util.Set;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.BufferedOutputStream;
+
+public class Compacter {
+
+  private class TreeNodeChar implements Comparable&lt;TreeNodeChar&gt;{
+    public char carac;
+    public int freq;
+    public TreeNodeChar left;
+    public TreeNodeChar right;
+
+<span class="nc" id="L26">    public TreeNodeChar(char carac) {</span>
+<span class="nc" id="L27">      this.carac = carac;</span>
+<span class="nc" id="L28">      this.freq = 1;</span>
+<span class="nc" id="L29">      this.left = null;</span>
+<span class="nc" id="L30">      this.right = null;</span>
+<span class="nc" id="L31">    }</span>
+
+<span class="nc" id="L33">    public TreeNodeChar(char carac, int freq) {</span>
+<span class="nc" id="L34">      this.carac = carac;</span>
+<span class="nc" id="L35">      this.freq = freq;</span>
+<span class="nc" id="L36">      this.left = null;</span>
+<span class="nc" id="L37">      this.right = null;</span>
+<span class="nc" id="L38">    }</span>
+
+<span class="nc" id="L40">    public TreeNodeChar(int freq, TreeNodeChar left, TreeNodeChar right) {</span>
+<span class="nc" id="L41">      this.carac = ' ';</span>
+<span class="nc" id="L42">      this.freq = freq;</span>
+<span class="nc" id="L43">      this.left = left;</span>
+<span class="nc" id="L44">      this.right = right;</span>
+<span class="nc" id="L45">    }</span>
+
+    public void incFreq() {
+<span class="nc" id="L48">      this.freq++;</span>
+<span class="nc" id="L49">    }</span>
+
+    public int compareTo(TreeNodeChar node){
+<span class="nc" id="L52">      return this.freq - node.freq;</span>
+    }
+
+    public String toString() {
+<span class="nc bnc" id="L56" title="All 2 branches missed.">      if (carac == '\n') {</span>
+<span class="nc" id="L57">        return &quot;Char: '\\n', frequencia: &quot;+freq;</span>
+<span class="nc bnc" id="L58" title="All 2 branches missed.">      } else if(((int)carac == 13)){</span>
+<span class="nc" id="L59">        return &quot;Char: 'CR', frequencia: &quot;+freq;</span>
+      }
+       else {
+<span class="nc" id="L62">        return &quot;Char: '&quot;+String.valueOf(carac)+&quot;' frequencia: &quot;+freq;</span>
+      }
+    }
+  }
+
+  private HashMap&lt;Character, Integer&gt; charMap;
+  private PriorityQueue&lt;TreeNodeChar&gt; minPQ;
+  private String path;
+  private String headerPath;
+  private String compactadoPath;
+  private HashMap&lt;Character,String&gt; tabelaCodigos;
+  private int skipChars;
+
+  public void compactaArquivo(String pasta, String nomeArquivo){
+<span class="nc" id="L76">    path = pasta+nomeArquivo;</span>
+<span class="nc" id="L77">    headerPath = pasta+&quot;Header&quot;+nomeArquivo;</span>
+<span class="nc" id="L78">    compactadoPath = pasta+&quot;Compactado&quot;+nomeArquivo+&quot;.zip&quot;;</span>
+    
+<span class="nc" id="L80">    leTXT();</span>
+<span class="nc" id="L81">    montaArvore();</span>
+<span class="nc" id="L82">    compactaTXT();</span>
+    try{
+<span class="nc" id="L84">      escreveHeader();</span>
+<span class="nc" id="L85">    } catch(IOException e){</span>
+<span class="nc" id="L86">      System.out.println(e);</span>
+<span class="nc" id="L87">    }</span>
+<span class="nc" id="L88">  }</span>
+
+<span class="nc" id="L90">  public Compacter() {</span>
+<span class="nc" id="L91">    charMap = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L92">    tabelaCodigos = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L93">    minPQ = new PriorityQueue&lt;&gt;();</span>
+<span class="nc" id="L94">  }</span>
+
+  public void leTXT() {
+    try {
+<span class="nc" id="L98">      Scanner scan = new Scanner(new File(path));</span>
+<span class="nc" id="L99">      scan.useDelimiter(&quot;&quot;);</span>
+<span class="nc bnc" id="L100" title="All 2 branches missed.">      while (scan.hasNext()) {</span>
+<span class="nc" id="L101">        char letra = scan.next().charAt(0);</span>
+<span class="nc bnc" id="L102" title="All 2 branches missed.">        if (charMap.containsKey(letra)) {</span>
+<span class="nc" id="L103">          charMap.put(letra, charMap.get(letra) + 1);</span>
+        } else {
+<span class="nc" id="L105">          charMap.put(letra, 1);</span>
+        }
+        /*
+         * OR WE CAN DO... charMap.put(letra, charMap.getOrDefault(letra, 0) +1); sem os
+         * 'ifs'. que coloca no mapa a chave 'letra' e associa ao valor do get!, se a
+         * chave ja tiver valor associado entao ele pega o valor do get no mapa, caso
+         * ela nao esteja associada ele retorna o valor default, no caso '0'.
+         */
+<span class="nc" id="L113">      }</span>
+<span class="nc" id="L114">      scan.close();</span>
+<span class="nc" id="L115">    } catch (FileNotFoundException e) {</span>
+<span class="nc" id="L116">      e.printStackTrace();</span>
+<span class="nc" id="L117">    }</span>
+    // IMPRESSAO DOS DADOS DO MAPA!
+    /*
+     * charMap.forEach( (letra,freq) -&gt; { if(letra.equals('\n')){
+     * //System.out.println(&quot;Letra :'&quot;+String.valueOf(letra.hashCode())
+     * +&quot;', Frequencia :&quot;+freq); //String s = String.valueOf(&quot;\r&quot;+letra);
+     * //System.out.printf(&quot;Letra : '\\%c', Frequencia : %d\n&quot;,letra,freq );
+     * System.out.println(&quot;Letra :'\\n', Frequencia :&quot;+freq); //Gambiarra se nao
+     * essa jossa cria uma nova linha na impressao }else{
+     * System.out.println(&quot;Letra :'&quot;+String.valueOf(letra)+&quot;', Frequencia :&quot;+freq);
+     * } });
+     */
+<span class="nc" id="L129">  }</span>
+
+  public void montaArvore() {
+<span class="nc" id="L132">    charMap.forEach((letra, freq) -&gt; {</span>
+<span class="nc" id="L133">      TreeNodeChar node = new TreeNodeChar(letra, freq);</span>
+<span class="nc" id="L134">      minPQ.add(node);</span>
+<span class="nc" id="L135">    });</span>
+    // IMPRESSAO REMOVENDO NA ORDEM QUE A PQ ORDENA A PRIORIDADE
+    // MENOR FREQUENCIA PRIMEIRO
+<span class="nc bnc" id="L138" title="All 2 branches missed.">    while (minPQ.size() != 1){</span>
+<span class="nc" id="L139">      TreeNodeChar nodeAuxLeft = minPQ.remove();</span>
+<span class="nc" id="L140">      TreeNodeChar nodeAuxRight = minPQ.remove();</span>
+<span class="nc" id="L141">      TreeNodeChar nodeAuxRoot = new TreeNodeChar(nodeAuxLeft.freq+nodeAuxRight.freq, nodeAuxLeft, nodeAuxRight);</span>
+      
+<span class="nc" id="L143">      minPQ.add(nodeAuxRoot);</span>
+<span class="nc" id="L144">    }</span>
+
+<span class="nc" id="L146">    montaTabelaCodigos(minPQ.remove(), &quot;&quot;);</span>
+<span class="nc" id="L147">  }</span>
+
+  public void escreveHeader() throws IOException{
+<span class="nc" id="L150">    FileWriter arq = new FileWriter(headerPath);</span>
+<span class="nc" id="L151">    PrintWriter gravarArq = new PrintWriter(arq);</span>
+<span class="nc" id="L152">    gravarArq.printf(String.valueOf(skipChars)+&quot;\n&quot;);</span>
+<span class="nc" id="L153">    tabelaCodigos.forEach( (letra,codigo) -&gt; { </span>
+<span class="nc bnc" id="L154" title="All 2 branches missed.">      if(letra.equals('\n')){</span>
+<span class="nc" id="L155">        gravarArq.printf(&quot;\\n:&quot;+codigo+&quot;\n&quot;);</span>
+<span class="nc bnc" id="L156" title="All 2 branches missed.">      } else if(((int)letra == 13)){</span>
+<span class="nc" id="L157">        gravarArq.printf(&quot;CR:&quot;+codigo+&quot;\n&quot;);</span>
+      } else {
+<span class="nc" id="L159">        gravarArq.printf(&quot;%c:&quot;+codigo+&quot;\n&quot;, letra);</span>
+      }
+<span class="nc" id="L161">    });</span>
+
+<span class="nc" id="L163">    arq.close();</span>
+<span class="nc" id="L164">  }</span>
+
+  public void montaTabelaCodigos(TreeNodeChar tree, String codigo){
+<span class="nc bnc" id="L167" title="All 4 branches missed.">    if(tree.left == null &amp;&amp; tree.right == null){</span>
+<span class="nc" id="L168">      tabelaCodigos.put(tree.carac, codigo);</span>
+    } else {
+<span class="nc" id="L170">      montaTabelaCodigos(tree.left, codigo+&quot;0&quot;);</span>
+<span class="nc" id="L171">      montaTabelaCodigos(tree.right, codigo+&quot;1&quot;);</span>
+    } 
+<span class="nc" id="L173">  }</span>
+
+  static byte[] decodeBinary(String s) {
+<span class="nc bnc" id="L176" title="All 2 branches missed.">    if (s.length() % 8 != 0) throw new IllegalArgumentException(</span>
+        &quot;Binary data length must be multiple of 8&quot;);
+<span class="nc" id="L178">    byte[] data = new byte[s.length() / 8];</span>
+<span class="nc bnc" id="L179" title="All 2 branches missed.">    for (int i = 0; i &lt; s.length(); i++) {</span>
+<span class="nc" id="L180">        char c = s.charAt(i);</span>
+<span class="nc bnc" id="L181" title="All 2 branches missed.">        if (c == '1') {</span>
+<span class="nc" id="L182">            data[i &gt;&gt; 3] |= 0x80 &gt;&gt; (i &amp; 0x7);</span>
+<span class="nc bnc" id="L183" title="All 2 branches missed.">        } else if (c != '0') {</span>
+<span class="nc" id="L184">            throw new IllegalArgumentException(&quot;Invalid char in binary string&quot;);</span>
+        }
+    }
+<span class="nc" id="L187">    return data;</span>
+  }
+
+  public void compactaTXT(){
+    try {
+<span class="nc" id="L192">      Scanner scan = new Scanner(new File(path));</span>
+<span class="nc" id="L193">      scan.useDelimiter(&quot;&quot;);</span>
+<span class="nc" id="L194">      StringBuilder strBuild = new StringBuilder();</span>
+<span class="nc bnc" id="L195" title="All 2 branches missed.">      while (scan.hasNext()) { </span>
+<span class="nc" id="L196">        char letra = scan.next().charAt(0);</span>
+<span class="nc" id="L197">        String codBin = tabelaCodigos.get(letra);</span>
+<span class="nc" id="L198">        strBuild.append(codBin);</span>
+<span class="nc" id="L199">      }</span>
+<span class="nc" id="L200">      skipChars = 8 - strBuild.toString().length() % 8;</span>
+<span class="nc bnc" id="L201" title="All 2 branches missed.">      for(int i = 0; i &lt; skipChars; i++){</span>
+<span class="nc" id="L202">        strBuild.append(&quot;0&quot;);</span>
+      }
+<span class="nc" id="L204">      byte[] data = decodeBinary(strBuild.toString());</span>
+<span class="nc" id="L205">      java.nio.file.Files.write(new File(compactadoPath).toPath(), data);</span>
+<span class="nc" id="L206">      scan.close();</span>
+<span class="nc" id="L207">    } catch (Exception e) {</span>
+<span class="nc" id="L208">      e.printStackTrace();</span>
+<span class="nc" id="L209">    }</span>
+<span class="nc" id="L210">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>
