@@ -1,0 +1,255 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Compacter.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">ExercicioRefatoracaoBanco</a> &gt; <a href="index.source.html" class="el_package">osGuri</a> &gt; <span class="el_source">Compacter.java</span></div><h1>Compacter.java</h1><pre class="source lang-java linenums">package osGuri;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.PriorityQueue;
+import java.util.Scanner;
+import java.util.Set;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.BufferedOutputStream;
+
+/** 
+ *  Classe responsavel por realizar todos os passos do algoritmo de Huffman para
+ *  realizar a compressao de um arquivo.
+*/
+public class Compacter {
+
+  /** 
+   *  Classe auxiliar para relizar o mapeamento de caracteres e sua respectiva frequencia, assim como 
+   *  para montar a arvore binaria.
+  */
+  private class TreeNodeChar implements Comparable&lt;TreeNodeChar&gt;{
+    public char carac;
+    public int freq;
+    public TreeNodeChar left;
+    public TreeNodeChar right;
+
+<span class="nc" id="L34">    public TreeNodeChar(char carac) {</span>
+<span class="nc" id="L35">      this.carac = carac;</span>
+<span class="nc" id="L36">      this.freq = 1;</span>
+<span class="nc" id="L37">      this.left = null;</span>
+<span class="nc" id="L38">      this.right = null;</span>
+<span class="nc" id="L39">    }</span>
+
+<span class="nc" id="L41">    public TreeNodeChar(char carac, int freq) {</span>
+<span class="nc" id="L42">      this.carac = carac;</span>
+<span class="nc" id="L43">      this.freq = freq;</span>
+<span class="nc" id="L44">      this.left = null;</span>
+<span class="nc" id="L45">      this.right = null;</span>
+<span class="nc" id="L46">    }</span>
+
+<span class="nc" id="L48">    public TreeNodeChar(int freq, TreeNodeChar left, TreeNodeChar right) {</span>
+<span class="nc" id="L49">      this.carac = ' ';</span>
+<span class="nc" id="L50">      this.freq = freq;</span>
+<span class="nc" id="L51">      this.left = left;</span>
+<span class="nc" id="L52">      this.right = right;</span>
+<span class="nc" id="L53">    }</span>
+
+    public void incFreq() {
+<span class="nc" id="L56">      this.freq++;</span>
+<span class="nc" id="L57">    }</span>
+
+    public int compareTo(TreeNodeChar node){
+<span class="nc" id="L60">      return this.freq - node.freq;</span>
+    }
+
+    public String toString() {
+<span class="nc bnc" id="L64" title="All 2 branches missed.">      if (carac == '\n') {</span>
+<span class="nc" id="L65">        return &quot;Char: '\\n', frequencia: &quot;+freq;</span>
+<span class="nc bnc" id="L66" title="All 2 branches missed.">      } else if(((int)carac == 13)){</span>
+<span class="nc" id="L67">        return &quot;Char: 'CR', frequencia: &quot;+freq;</span>
+      }
+       else {
+<span class="nc" id="L70">        return &quot;Char: '&quot;+String.valueOf(carac)+&quot;' frequencia: &quot;+freq;</span>
+      }
+    }
+  }
+
+  private HashMap&lt;Character, Integer&gt; charMap;
+  private PriorityQueue&lt;TreeNodeChar&gt; minPQ;
+  private String path;
+  private String headerPath;
+  private String compactadoPath;
+  private HashMap&lt;Character,String&gt; tabelaCodigos;
+  private int skipChars;
+
+  /** 
+   *  Metodo responsavel por receber o arquivo e o diretorio deste arquivo para ser comprimido
+   *  e chamar na ordem correta os metodos responsaveis por cada parte do processo de compressao.
+   *  Monta os paths do arquivo Header e do arquivo final compactado.
+   * 
+   * @param pasta caminho ate o diretorio do arquivo.
+   * @param nomeArquivo nome do arquivo a ser comprimido.
+  */
+  public void compactaArquivo(String pasta, String nomeArquivo){
+<span class="nc" id="L92">    path = pasta+nomeArquivo;</span>
+<span class="nc" id="L93">    headerPath = pasta+&quot;Header&quot;+nomeArquivo;</span>
+<span class="nc" id="L94">    compactadoPath = pasta+&quot;Compactado&quot;+nomeArquivo+&quot;.zip&quot;;</span>
+    
+<span class="nc" id="L96">    leTXT();</span>
+<span class="nc" id="L97">    montaArvore();</span>
+<span class="nc" id="L98">    compactaTXT();</span>
+    try{
+<span class="nc" id="L100">      escreveHeader();</span>
+<span class="nc" id="L101">    } catch(IOException e){</span>
+<span class="nc" id="L102">      System.out.println(e);</span>
+<span class="nc" id="L103">    }</span>
+<span class="nc" id="L104">  }</span>
+
+<span class="nc" id="L106">  public Compacter() {</span>
+<span class="nc" id="L107">    charMap = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L108">    tabelaCodigos = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L109">    minPQ = new PriorityQueue&lt;&gt;();</span>
+<span class="nc" id="L110">  }</span>
+
+  /** 
+   *  Metodo responsavel por abrir o arquivo txt que deseja-se comprimir, ler caracter a caracter
+   * do arquivo e inseri-lo em um mapa, onde o caracter eh a key e o valor armazenado eh a 
+   * frequencia que este caracter aparece no texto. A frequencia eh calculada na hora de sua adicao
+   * no map, sendo a primeira vez que eh adicionado frequencia 1, e as seguintes este valor eh incrementado.
+  */
+  public void leTXT() {
+    try {
+<span class="nc" id="L120">      Scanner scan = new Scanner(new File(path));</span>
+<span class="nc" id="L121">      scan.useDelimiter(&quot;&quot;);</span>
+<span class="nc bnc" id="L122" title="All 2 branches missed.">      while (scan.hasNext()) {</span>
+<span class="nc" id="L123">        char letra = scan.next().charAt(0);</span>
+<span class="nc bnc" id="L124" title="All 2 branches missed.">        if (charMap.containsKey(letra)) {</span>
+<span class="nc" id="L125">          charMap.put(letra, charMap.get(letra) + 1);</span>
+        } else {
+<span class="nc" id="L127">          charMap.put(letra, 1);</span>
+        }
+<span class="nc" id="L129">      }</span>
+<span class="nc" id="L130">      scan.close();</span>
+<span class="nc" id="L131">    } catch (FileNotFoundException e) {</span>
+<span class="nc" id="L132">      e.printStackTrace();</span>
+<span class="nc" id="L133">    }</span>
+<span class="nc" id="L134">  }</span>
+
+  /** 
+   *  Metodo responsavel por percorrer o map que contem os caracteres e suas frequencias adicionando-os
+   * em uma priority queue como um objeto TreeNodeChar, que sera utilizado para montar a arvore dos caracteres.
+   * Depois, remove dois a dois os caracteres com menor frequencia, adicionando-os a um novo objeto TreeNodeChar
+   * que sera um ramo intermediario da arvore com a soma das frequencias dos dois caracteres, em seguida, este ramo
+   * eh adicionado novamente a prioty queue e o processo eh repetido ate que haja apenas um TreeNodeChar na priority queue
+   * seno este a raiz. por fim, chama o metodo montaTabelaCodigos com a raiz.
+   * 
+  */
+  public void montaArvore() {
+<span class="nc" id="L146">    charMap.forEach((letra, freq) -&gt; {</span>
+<span class="nc" id="L147">      TreeNodeChar node = new TreeNodeChar(letra, freq);</span>
+<span class="nc" id="L148">      minPQ.add(node);</span>
+<span class="nc" id="L149">    });</span>
+
+<span class="nc bnc" id="L151" title="All 2 branches missed.">    while (minPQ.size() != 1){</span>
+<span class="nc" id="L152">      TreeNodeChar nodeAuxLeft = minPQ.remove();</span>
+<span class="nc" id="L153">      TreeNodeChar nodeAuxRight = minPQ.remove();</span>
+<span class="nc" id="L154">      TreeNodeChar nodeAuxRoot = new TreeNodeChar(nodeAuxLeft.freq+nodeAuxRight.freq, nodeAuxLeft, nodeAuxRight);</span>
+      
+<span class="nc" id="L156">      minPQ.add(nodeAuxRoot);</span>
+<span class="nc" id="L157">    }</span>
+
+<span class="nc" id="L159">    montaTabelaCodigos(minPQ.remove(), &quot;&quot;);</span>
+<span class="nc" id="L160">  }</span>
+
+  /** 
+   *  Metodo responsavel por salvar o arquivo header contendo a tabela de codigos no mesmo diretorio
+   *  onde o arquivo original foi selecionado.
+   * 
+  */
+  public void escreveHeader() throws IOException{
+<span class="nc" id="L168">    FileWriter arq = new FileWriter(headerPath);</span>
+<span class="nc" id="L169">    PrintWriter gravarArq = new PrintWriter(arq);</span>
+<span class="nc" id="L170">    gravarArq.printf(String.valueOf(skipChars)+&quot;\n&quot;);</span>
+<span class="nc" id="L171">    tabelaCodigos.forEach( (letra,codigo) -&gt; { </span>
+<span class="nc bnc" id="L172" title="All 2 branches missed.">      if(letra.equals('\n')){</span>
+<span class="nc" id="L173">        gravarArq.printf(&quot;\\n:&quot;+codigo+&quot;\n&quot;);</span>
+<span class="nc bnc" id="L174" title="All 2 branches missed.">      } else if(((int)letra == 13)){</span>
+<span class="nc" id="L175">        gravarArq.printf(&quot;CR:&quot;+codigo+&quot;\n&quot;);</span>
+      } else {
+<span class="nc" id="L177">        gravarArq.printf(&quot;%c:&quot;+codigo+&quot;\n&quot;, letra);</span>
+      }
+<span class="nc" id="L179">    });</span>
+
+<span class="nc" id="L181">    arq.close();</span>
+<span class="nc" id="L182">  }</span>
+
+  /** 
+   *  Metodo responsavel por receber um objeto TreeNodeChar e o codigo binario passado recursivamente
+   *  para montar a tabela de codigos. Quando acha um folha, adiciona o caracter e o codigo binario construido
+   *  recursivamente a um hashmap tabelaCodigos, onde o caracter eh a key e o codigo eh o valor.
+   * 
+   * @param tree objeto TreeNodeChar para ser percorrido.
+   * @param codigo codigo binario do caracter montado recursivamente.
+  */
+  public void montaTabelaCodigos(TreeNodeChar tree, String codigo){
+<span class="nc bnc" id="L193" title="All 4 branches missed.">    if(tree.left == null &amp;&amp; tree.right == null){</span>
+<span class="nc" id="L194">      tabelaCodigos.put(tree.carac, codigo);</span>
+    } else {
+<span class="nc" id="L196">      montaTabelaCodigos(tree.left, codigo+&quot;0&quot;);</span>
+<span class="nc" id="L197">      montaTabelaCodigos(tree.right, codigo+&quot;1&quot;);</span>
+    } 
+<span class="nc" id="L199">  }</span>
+
+  /** 
+   *  Metodo responsavel por receber uma string de de binarios  ex: &quot;10100101&quot;, e transforma-la
+   * em um byte array, para ser escrito no arquivo final.
+   * 
+   * @param s string com o codigo binario.
+  */
+  static byte[] decodeBinary(String s) {
+<span class="nc bnc" id="L208" title="All 2 branches missed.">    if (s.length() % 8 != 0) throw new IllegalArgumentException(</span>
+        &quot;Binary data length must be multiple of 8&quot;);
+<span class="nc" id="L210">    byte[] data = new byte[s.length() / 8];</span>
+<span class="nc bnc" id="L211" title="All 2 branches missed.">    for (int i = 0; i &lt; s.length(); i++) {</span>
+<span class="nc" id="L212">        char c = s.charAt(i);</span>
+<span class="nc bnc" id="L213" title="All 2 branches missed.">        if (c == '1') {</span>
+<span class="nc" id="L214">            data[i &gt;&gt; 3] |= 0x80 &gt;&gt; (i &amp; 0x7);</span>
+<span class="nc bnc" id="L215" title="All 2 branches missed.">        } else if (c != '0') {</span>
+<span class="nc" id="L216">            throw new IllegalArgumentException(&quot;Invalid char in binary string&quot;);</span>
+        }
+    }
+<span class="nc" id="L219">    return data;</span>
+  }
+
+  /** 
+   *  Metodo responsavel por ler o arquivo txt que deseja-se compacter, caracter a caracter
+   *  buscando na tabela de codigos seu respectivo codigo binario, transaformando este codigo
+   * em um array de bytes e em seguida escrevendo todo esste array de bytes para o arquivo de saida
+   *  .zip compactado.
+   * 
+   * Observacao: como java nao reconhece bits, apenas Bytes, eh necessario adicionar a quantidade
+   * faltante de bits para que o codigo binario feche um byte no ultimo caracter, sendo assim,
+   * esses bits sao adicionados como zeros no final do arquivo, e escritos no header, para assim
+   * o descompactador saber quantos bits ele precisa deixar de ler no fim do arquivo.
+  */
+  public void compactaTXT(){
+    try {
+<span class="nc" id="L235">      Scanner scan = new Scanner(new File(path));</span>
+<span class="nc" id="L236">      scan.useDelimiter(&quot;&quot;);</span>
+<span class="nc" id="L237">      StringBuilder strBuild = new StringBuilder();</span>
+<span class="nc bnc" id="L238" title="All 2 branches missed.">      while (scan.hasNext()) { </span>
+<span class="nc" id="L239">        char letra = scan.next().charAt(0);</span>
+<span class="nc" id="L240">        String codBin = tabelaCodigos.get(letra);</span>
+<span class="nc" id="L241">        strBuild.append(codBin);</span>
+<span class="nc" id="L242">      }</span>
+<span class="nc" id="L243">      skipChars = 8 - strBuild.toString().length() % 8;</span>
+<span class="nc bnc" id="L244" title="All 2 branches missed.">      for(int i = 0; i &lt; skipChars; i++){</span>
+<span class="nc" id="L245">        strBuild.append(&quot;0&quot;);</span>
+      }
+<span class="nc" id="L247">      byte[] data = decodeBinary(strBuild.toString());</span>
+<span class="nc" id="L248">      java.nio.file.Files.write(new File(compactadoPath).toPath(), data);</span>
+<span class="nc" id="L249">      scan.close();</span>
+<span class="nc" id="L250">    } catch (Exception e) {</span>
+<span class="nc" id="L251">      e.printStackTrace();</span>
+<span class="nc" id="L252">    }</span>
+<span class="nc" id="L253">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>
